@@ -35,7 +35,7 @@ export default function DashboardPage() {
 
           setRole(userRole);
         }
-      } catch (error) {
+      } catch {
         router.push("/auth");
       }
     }
