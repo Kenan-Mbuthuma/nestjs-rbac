@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 16
+    commands:
+      - npm install
+  pre_build:
+    commands:
+      - npm install --save-dev @types/lodash
+  build:
+    commands:
+      - echo "Build started on $(date)"
+      - npm run build
+  post_build:
+    commands:
+      - echo "Build completed on $(date)"
+artifacts:
+  files:
+    - .next/**/*
+    - public/**/*
+    - package.json
+    - next.config.js
+cache:
+  paths:
+    - node_modules/**/*
