@@ -1,9 +1,9 @@
 "use client"; // ✅ Mark this as a Client Component
 
-import { getCurrentUser, fetchAuthSession } from "@aws-amplify/auth"; // ✅ Correct imports for Amplify Gen 2
+import { fetchAuthSession } from "@aws-amplify/auth"; // Removed getCurrentUser since it was unused
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { jwtDecode } from "jwt-decode"; // ✅ Correct way to decode tokens
+import { jwtDecode } from "jwt-decode";
 
 // Type definition for JWT decoding
 interface DecodedToken {
@@ -18,9 +18,6 @@ export default function DashboardPage() {
   useEffect(() => {
     async function getUserRole() {
       try {
-        // ✅ Fetch the current authenticated user
-        const user = await getCurrentUser();
-
         // ✅ Fetch the authentication session to get the ID token
         const session = await fetchAuthSession();
         const idTokenString = session.tokens?.idToken?.toString() ?? "";
@@ -44,9 +41,9 @@ export default function DashboardPage() {
     }
 
     getUserRole();
-  }, []);
+  }, [router]); // ✅ Added 'router' as a dependency
 
-  // ✅ PayFast Test Payment Function with Console Logging of Payload
+  // ✅ PayFast Test Payment Function
   const handlePayFastTest = async () => {
     setPaymentLoading(true);
 

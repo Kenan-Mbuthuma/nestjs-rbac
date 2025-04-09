@@ -1,6 +1,6 @@
 "use client"; // ✅ Ensure this is a Client Component
 
-import { getCurrentUser, fetchAuthSession } from "@aws-amplify/auth";
+import { fetchAuthSession } from "@aws-amplify/auth";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
@@ -23,16 +23,14 @@ async function createCognitoClient() {
   const session = await fetchAuthSession();
   return new CognitoIdentityProviderClient({
     region: REGION,
-    credentials: session.credentials, // ✅ Uses Amplify authentication session
+    credentials: session.credentials,
   });
 }
 
-// ✅ Type definition for decoding JWT token
 interface DecodedToken {
   "cognito:groups"?: string[];
 }
 
-// ✅ Type definition for Cognito users
 interface CognitoUser {
   username: string;
   email: string;
@@ -49,26 +47,21 @@ export default function AdminPage() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        // ✅ Get current authenticated user
-        const user = await getCurrentUser();
         const session = await fetchAuthSession();
         const idTokenString = session.tokens?.idToken?.toString() ?? "";
 
         if (idTokenString) {
-          // ✅ Decode token to extract Cognito groups
           const decoded: DecodedToken = jwtDecode(idTokenString);
           const userGroups = decoded["cognito:groups"] || [];
           const userRole = userGroups.length > 0 ? userGroups[0] : "None";
 
           setRole(userRole);
 
-          // ✅ Redirect if not SystemAdmin
           if (userRole !== "SystemAdmin") {
             router.push("/auth");
             return;
           }
 
-          // ✅ Fetch all users (Only System Admins can do this)
           const usersList = await listAllUsers();
           setUsers(usersList);
         }
@@ -81,12 +74,11 @@ export default function AdminPage() {
     }
 
     fetchUsers();
-  }, []);
+  }, [router]); // ✅ include router in dependency array
 
-  // ✅ Function to list all users in Cognito
   async function listAllUsers() {
     try {
-      const client = await createCognitoClient(); // ✅ Authenticated client
+      const client = await createCognitoClient();
 
       const command = new ListUsersCommand({
         UserPoolId: USER_POOL_ID,
@@ -102,7 +94,7 @@ export default function AdminPage() {
           return {
             username: user.Username || "Unknown",
             email: emailAttr?.Value || "Unknown",
-            group: groupAttr?.Value || "OrgUser", // Default to OrgUser if missing
+            group: groupAttr?.Value || "OrgUser",
           };
         }) || []
       );
@@ -112,7 +104,6 @@ export default function AdminPage() {
     }
   }
 
-  // ✅ Function to update user group
   async function updateUserGroup(username: string, currentGroup: string, newGroup: string) {
     if (currentGroup === newGroup) {
       alert("User is already in this group.");
@@ -120,9 +111,8 @@ export default function AdminPage() {
     }
 
     try {
-      const client = await createCognitoClient(); // ✅ Authenticated client
+      const client = await createCognitoClient();
 
-      // ✅ Step 1: Remove user from their current group (if they have one)
       if (currentGroup && currentGroup !== "None") {
         const removeCommand = new AdminRemoveUserFromGroupCommand({
           UserPoolId: USER_POOL_ID,
@@ -134,7 +124,6 @@ export default function AdminPage() {
         console.log(`User ${username} removed from ${currentGroup}`);
       }
 
-      // ✅ Step 2: Add user to the new group
       const addCommand = new AdminAddUserToGroupCommand({
         UserPoolId: USER_POOL_ID,
         Username: username,
@@ -144,7 +133,6 @@ export default function AdminPage() {
       await client.send(addCommand);
       alert(`User ${username} moved to group ${newGroup}`);
 
-      // ✅ Update local state to reflect changes
       setUsers(
         users.map((user) =>
           user.username === username ? { ...user, group: newGroup } : user
