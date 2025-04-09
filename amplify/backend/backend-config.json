@@ -1,0 +1,96 @@
+{
+  "auth": {
+    "nextjsrbacaf0b6559": {
+      "customAuth": false,
+      "dependsOn": [
+        {
+          "attributes": [
+            "Arn",
+            "Name"
+          ],
+          "category": "function",
+          "resourceName": "nextjsrbacaf0b6559PostConfirmation",
+          "triggerProvider": "Cognito"
+        }
+      ],
+      "frontendAuthConfig": {
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyCharacters": [],
+          "passwordPolicyMinLength": 8
+        },
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "socialProviders": [],
+        "usernameAttributes": [
+          "EMAIL"
+        ],
+        "verificationMechanisms": [
+          "EMAIL"
+        ]
+      },
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito"
+    }
+  },
+  "function": {
+    "nextjsrbacaf0b6559PostConfirmation": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "nextjsrbacd3d18f0aPostConfirmation": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_function_nextjsrbacaf0b6559PostConfirmation_GROUP": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "nextjsrbacaf0b6559PostConfirmation"
+        }
+      ]
+    },
+    "AMPLIFY_function_nextjsrbacaf0b6559PostConfirmation_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "nextjsrbacaf0b6559PostConfirmation"
+        }
+      ]
+    },
+    "AMPLIFY_function_nextjsrbacaf0b6559PostConfirmation_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "nextjsrbacaf0b6559PostConfirmation"
+        }
+      ]
+    },
+    "AMPLIFY_function_nextjsrbacd3d18f0aPostConfirmation_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "nextjsrbacd3d18f0aPostConfirmation"
+        }
+      ]
+    },
+    "AMPLIFY_function_nextjsrbacd3d18f0aPostConfirmation_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "nextjsrbacd3d18f0aPostConfirmation"
+        }
+      ]
+    }
+  }
+}
