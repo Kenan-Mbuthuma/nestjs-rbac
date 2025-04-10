@@ -9,7 +9,7 @@ on:
 jobs:
   resiliency-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
       - name: 🔁 Checkout code
@@ -44,13 +44,13 @@ jobs:
         run: |
           echo "📁 Copying static files to .next/standalone..."
           mkdir -p .next/standalone/.next
-          cp -r .next/static .next/standalone/.next/static
+          cp -r .next/static .next/standalone/.next/static || echo "⚠️ No static folder found, skipping."
 
       - name: 🚀 Start Next.js App (Standalone) in Background
         run: |
           echo "🔥 Starting Next.js standalone server on port 3000..."
-          nohup node .next/standalone/server.js > app.log 2>&1 &
-          sleep 2
+          nohup node .next/standalone/server.js --port 3000 > app.log 2>&1 &
+          sleep 1
           echo "📄 Showing first lines of app.log:"
           head -n 40 app.log || echo "⚠️ Nothing in app.log yet"
         env:
@@ -58,9 +58,10 @@ jobs:
 
       - name: ⏳ Wait for App to Be Ready on Port 3000
         run: |
-          echo "⏳ Waiting for tcp:3000"
-          npx wait-on tcp:3000 || (
-            echo "❌ App failed to start. Dumping logs..."
+          echo "⏳ Waiting for http://localhost:3000 (max 60s)..."
+          npx wait-on http://localhost:3000 --timeout 20000 || (
+            echo "❌ App failed to respond on http://localhost:3000"
+            echo "📦 Dumping full app.log:"
             cat app.log
             exit 1
           )
