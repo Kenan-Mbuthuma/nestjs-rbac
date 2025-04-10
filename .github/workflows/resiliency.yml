@@ -26,16 +26,16 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Build the Next.js app
+      - name: Build Next.js App
         run: npm run build
 
-      - name: Start the app (background)
-        run: npm run start &
+      - name: Start Next.js app in background
+        run: node .next/standalone/server.js &
         env:
           PORT: 3000
 
       - name: Wait for app to be ready
         run: npx wait-on http://localhost:3000
 
-      - name: Run resiliency tests
+      - name: Run Resiliency Tests
         run: npx playwright test tests/resiliency
