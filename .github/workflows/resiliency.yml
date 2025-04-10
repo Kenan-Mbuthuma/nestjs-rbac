@@ -43,12 +43,5 @@ jobs:
             exit 1
           )
 
-      - name: Upload app.log if startup fails
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: app-log
-          path: app.log
-
       - name: Run Resiliency Tests
         run: npx playwright test tests/resiliency
