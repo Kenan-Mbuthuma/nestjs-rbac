@@ -26,9 +26,9 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run resiliency tests
-        run: npx playwright test
+        run: npx playwright test tests/resiliency
 
-      - name: Upload test report (optional)
+      - name: Upload test report
         uses: actions/upload-artifact@v2
         with:
           name: playwright-report
