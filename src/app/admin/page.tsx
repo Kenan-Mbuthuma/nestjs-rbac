@@ -1,9 +1,8 @@
-"use client"; // ✅ Ensure this is a Client Component
+"use client";
 
-import { fetchAuthSession } from "@aws-amplify/auth";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { jwtDecode } from "jwt-decode";
+import { getUserRole } from "@/utils/getUserRole";
 import {
   CognitoIdentityProviderClient,
   ListUsersCommand,
@@ -14,21 +13,17 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import { Button } from "@aws-amplify/ui-react";
 
-// 🔴 Replace with your actual AWS region & Cognito User Pool ID
-const REGION = "eu-west-1"; // ✅ Your AWS region
-const USER_POOL_ID = "eu-west-1_7mT1JdGh7"; // ✅ Replace with actual Cognito User Pool ID
+// AWS values
+const REGION = "eu-west-1";
+const USER_POOL_ID = "eu-west-1_7mT1JdGh7";
 
-// ✅ Function to create an AWS Cognito Client using Amplify Auth credentials
 async function createCognitoClient() {
+  const { fetchAuthSession } = await import("@aws-amplify/auth");
   const session = await fetchAuthSession();
   return new CognitoIdentityProviderClient({
     region: REGION,
     credentials: session.credentials,
   });
-}
-
-interface DecodedToken {
-  "cognito:groups"?: string[];
 }
 
 interface CognitoUser {
@@ -41,32 +36,24 @@ export default function AdminPage() {
   const router = useRouter();
   const [role, setRole] = useState<string>("");
   const [users, setUsers] = useState<CognitoUser[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchUsers() {
+      const userRole = await getUserRole();
+      setRole(userRole);
+
+      if (userRole !== "SystemAdmin") {
+        router.push("/auth");
+        return;
+      }
+
       try {
-        const session = await fetchAuthSession();
-        const idTokenString = session.tokens?.idToken?.toString() ?? "";
-
-        if (idTokenString) {
-          const decoded: DecodedToken = jwtDecode(idTokenString);
-          const userGroups = decoded["cognito:groups"] || [];
-          const userRole = userGroups.length > 0 ? userGroups[0] : "None";
-
-          setRole(userRole);
-
-          if (userRole !== "SystemAdmin") {
-            router.push("/auth");
-            return;
-          }
-
-          const usersList = await listAllUsers();
-          setUsers(usersList);
-        }
-      } catch (error) {
-        console.error("Error fetching user role", error);
+        const usersList = await listAllUsers();
+        setUsers(usersList);
+      } catch (err) {
+        console.error("Error fetching users", err);
         setError("Error fetching users. Please try again.");
       } finally {
         setLoading(false);
@@ -74,16 +61,12 @@ export default function AdminPage() {
     }
 
     fetchUsers();
-  }, [router]); // ✅ include router in dependency array
+  }, [router]);
 
   async function listAllUsers() {
     try {
       const client = await createCognitoClient();
-
-      const command = new ListUsersCommand({
-        UserPoolId: USER_POOL_ID,
-      });
-
+      const command = new ListUsersCommand({ UserPoolId: USER_POOL_ID });
       const response = await client.send(command);
 
       return (
@@ -119,9 +102,7 @@ export default function AdminPage() {
           Username: username,
           GroupName: currentGroup,
         });
-
         await client.send(removeCommand);
-        console.log(`User ${username} removed from ${currentGroup}`);
       }
 
       const addCommand = new AdminAddUserToGroupCommand({
@@ -129,15 +110,15 @@ export default function AdminPage() {
         Username: username,
         GroupName: newGroup,
       });
-
       await client.send(addCommand);
-      alert(`User ${username} moved to group ${newGroup}`);
 
       setUsers(
         users.map((user) =>
           user.username === username ? { ...user, group: newGroup } : user
         )
       );
+
+      alert(`User ${username} moved to group ${newGroup}`);
     } catch (err) {
       console.error("Error updating user group:", err);
       alert("Failed to update user role.");
@@ -148,44 +129,47 @@ export default function AdminPage() {
     <div>
       <h1>System Admin Dashboard</h1>
       <p>Role: {role}</p>
-      <p>Welcome, you have full system access!</p>
-
       {loading && <p>Loading users...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <h2>All Users</h2>
-      <table border={1} width="100%">
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Group</th>
-            <th>Change Role</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.username}>
-              <td>{user.username}</td>
-              <td>{user.email}</td>
-              <td>{user.group}</td>
-              <td>
-                <select
-                  value={user.group}
-                  onChange={(e) => updateUserGroup(user.username, user.group, e.target.value)}
-                >
-                  <option value="OrgUser">OrgUser</option>
-                  <option value="OrgAdmin">OrgAdmin</option>
-                  <option value="SystemAdmin">SystemAdmin</option>
-                </select>
-                <Button onClick={() => updateUserGroup(user.username, user.group, user.group)}>
-                  Update
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {!loading && !error && (
+        <>
+          <h2>All Users</h2>
+          <table border={1} width="100%">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Group</th>
+                <th>Change Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.username}>
+                  <td>{user.username}</td>
+                  <td>{user.email}</td>
+                  <td>{user.group}</td>
+                  <td>
+                    <select
+                      value={user.group}
+                      onChange={(e) =>
+                        updateUserGroup(user.username, user.group, e.target.value)
+                      }
+                    >
+                      <option value="OrgUser">OrgUser</option>
+                      <option value="OrgAdmin">OrgAdmin</option>
+                      <option value="SystemAdmin">SystemAdmin</option>
+                    </select>
+                    <Button onClick={() => updateUserGroup(user.username, user.group, user.group)}>
+                      Update
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   );
 }

@@ -1,11 +1,10 @@
-"use client"; // ✅ Mark this as a Client Component
+"use client";
 
-import { fetchAuthSession } from "@aws-amplify/auth"; // Removed getCurrentUser since it was unused
+import { fetchAuthSession } from "@aws-amplify/auth";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 
-// Type definition for JWT decoding
 interface DecodedToken {
   "cognito:groups"?: string[];
 }
@@ -14,21 +13,19 @@ export default function DashboardPage() {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [error, setError] = useState(false); // ✅ For error tracking
 
   useEffect(() => {
     async function getUserRole() {
       try {
-        // ✅ Fetch the authentication session to get the ID token
         const session = await fetchAuthSession();
         const idTokenString = session.tokens?.idToken?.toString() ?? "";
 
         if (idTokenString) {
-          // ✅ Decode the token to get the user's Cognito groups
           const decoded: DecodedToken = jwtDecode(idTokenString);
           const userGroups = decoded["cognito:groups"] || [];
           const userRole = userGroups.length > 0 ? userGroups[0] : "None";
 
-          // ✅ Redirect if user is not OrgAdmin or OrgUser
           if (!["OrgAdmin", "OrgUser"].includes(userRole)) {
             router.push("/auth");
           }
@@ -41,11 +38,11 @@ export default function DashboardPage() {
     }
 
     getUserRole();
-  }, [router]); // ✅ Added 'router' as a dependency
+  }, [router]);
 
-  // ✅ PayFast Test Payment Function
   const handlePayFastTest = async () => {
     setPaymentLoading(true);
+    setError(false); // ✅ Reset before retry
 
     const payload = {
       amount: "100.00",
@@ -87,19 +84,30 @@ export default function DashboardPage() {
       window.location.href = paymentUrl;
     } catch (error) {
       console.error("❌ PayFast Payment Error:", error);
-      alert("Error processing PayFast payment. Please try again.");
+      setError(true); // ✅ Show Retry UI
     } finally {
       setPaymentLoading(false);
     }
   };
 
   return (
-    <div>
+    <main style={{ padding: "20px" }}>
       <h1>Dashboard</h1>
       <p>Role: {role}</p>
       <p>Welcome to the company dashboard!</p>
 
-      {/* ✅ PayFast Test Button */}
+      {/* ✅ Show Retry UI for Playwright test */}
+      {error && (
+        <div
+          data-testid="retry-ui"
+          style={{ color: "red", marginTop: "20px", border: "1px solid red", padding: "10px" }}
+        >
+          <p>Something went wrong. Please try again.</p>
+          <button onClick={handlePayFastTest}>Retry</button>
+        </div>
+      )}
+
+      {/* ✅ PayFast Button */}
       <button
         onClick={handlePayFastTest}
         disabled={paymentLoading}
@@ -115,6 +123,6 @@ export default function DashboardPage() {
       >
         {paymentLoading ? "Processing..." : "Test PayFast Payment"}
       </button>
-    </div>
+    </main>
   );
 }
