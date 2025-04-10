@@ -9,6 +9,7 @@ on:
 jobs:
   resiliency-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -22,8 +23,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
+      - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+
+      - name: Build the Next.js app
+        run: npm run build
+
+      - name: Start the app (background)
+        run: npm run start &
+        env:
+          PORT: 3000
+
+      - name: Wait for app to be ready
+        run: npx wait-on http://localhost:3000
 
       - name: Run resiliency tests
         run: npx playwright test tests/resiliency
