@@ -29,6 +29,14 @@ jobs:
       - name: Build Next.js App (Standalone)
         run: npm run build
 
+      - name: ✅ Check for server.js
+        run: |
+          echo "Checking for standalone server..."
+          ls -l .next/standalone/server.js || (
+            echo "❌ server.js NOT FOUND" &&
+            exit 1
+          )
+
       - name: Start Next.js App (Standalone) in Background
         run: |
           nohup node .next/standalone/server.js > app.log 2>&1 &
