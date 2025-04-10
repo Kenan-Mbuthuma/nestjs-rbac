@@ -56,10 +56,10 @@ jobs:
         env:
           PORT: 3000
 
-      - name: Wait for App to Be Ready on Port 3000
+      - name: ⏳ Wait for App to Be Ready on Port 3000
         run: |
-          echo "⏳ Waiting for http://localhost:3000"
-          npx wait-on http://localhost:3000 --httpTimeout 10000 --timeout 90000 || (
+          echo "⏳ Waiting for tcp:3000"
+          npx wait-on tcp:3000 || (
             echo "❌ App failed to start. Dumping logs..."
             cat app.log
             exit 1
@@ -67,4 +67,3 @@ jobs:
 
       - name: ✅ Run Resiliency Tests
         run: npx playwright test tests/resiliency
-
