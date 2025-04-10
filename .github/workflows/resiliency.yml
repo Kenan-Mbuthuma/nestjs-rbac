@@ -9,7 +9,7 @@ on:
 jobs:
   resiliency-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -29,9 +29,14 @@ jobs:
       - name: Build Next.js App (Standalone)
         run: npm run build
 
-      - name: ✅ Check for server.js
+      - name: Show .next folder structure
         run: |
-          echo "Checking for standalone server..."
+          echo "✅ Checking .next folder:"
+          ls -R .next || echo "❌ .next folder missing"
+
+      - name: Check for server.js
+        run: |
+          echo "✅ Checking for standalone server.js"
           ls -l .next/standalone/server.js || (
             echo "❌ server.js NOT FOUND" &&
             exit 1
@@ -39,14 +44,19 @@ jobs:
 
       - name: Start Next.js App (Standalone) in Background
         run: |
+          echo "🚀 Starting standalone app..."
           nohup node .next/standalone/server.js > app.log 2>&1 &
+          sleep 5
+          echo "📄 Preview of app.log:"
+          cat app.log || echo "⚠️ No log file yet"
         env:
           PORT: 3000
 
       - name: Wait for App to Be Ready on Port 3000
         run: |
+          echo "⏳ Waiting for app to respond..."
           npx wait-on http://localhost:3000 || (
-            echo "❌ App failed to start. Dumping logs..." &&
+            echo "❌ App failed to start. Dumping app.log..." &&
             cat app.log &&
             exit 1
           )
