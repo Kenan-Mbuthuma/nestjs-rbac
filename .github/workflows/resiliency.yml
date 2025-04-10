@@ -48,19 +48,17 @@ jobs:
 
       - name: 🚀 Start Next.js App (Standalone) in Background
         run: |
-          echo "🔥 Starting Next.js standalone server on port 3000..."
-          nohup node .next/standalone/server.js --port 3000 > app.log 2>&1 &
-          sleep 1
+          echo "🔥 Starting Next.js standalone server on 127.0.0.1:3000..."
+          HOST=127.0.0.1 PORT=3000 nohup node .next/standalone/server.js > app.log 2>&1 &
+          sleep 2
           echo "📄 Showing first lines of app.log:"
           head -n 40 app.log || echo "⚠️ Nothing in app.log yet"
-        env:
-          PORT: 3000
 
       - name: ⏳ Wait for App to Be Ready on Port 3000
         run: |
-          echo "⏳ Waiting for http://localhost:3000 (max 60s)..."
-          npx wait-on http://localhost:3000 --timeout 20000 || (
-            echo "❌ App failed to respond on http://localhost:3000"
+          echo "⏳ Waiting for http://127.0.0.1:3000 (max 30s)..."
+          npx wait-on http://127.0.0.1:3000 --timeout 30000 || (
+            echo "❌ App failed to respond on http://127.0.0.1:3000"
             echo "📦 Dumping full app.log:"
             cat app.log
             exit 1
