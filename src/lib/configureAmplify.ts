@@ -18,11 +18,10 @@ export function configureAmplify() {
     };
 
     Amplify.configure(dummyConfig);
-    console.log("✅ Amplify configured with dummy config");
+    console.log("✅ Amplify configured with dummy config (CI/dev)");
   } else {
     try {
-      // Use require here because it's synchronous and compatible with .ts or .js
-      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const awsExports = require("../aws-exports").default;
       Amplify.configure(awsExports);
       console.log("✅ Amplify configured with aws-exports.js");
