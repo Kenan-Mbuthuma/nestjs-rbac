@@ -1,7 +1,25 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Providers from "@/components/providers"; // Import the Amplify provider
+import Providers from "@/components/providers";
+
+// ✅ CI-safe Amplify mock config to prevent server crash
+if (process.env.NODE_ENV === "development" || process.env.CI === "true") {
+  try {
+    const dummyConfig = {
+      Auth: {
+        userPoolId: "mock",
+        userPoolWebClientId: "mock",
+        region: "mock",
+      },
+    };
+    const { Amplify } = require("aws-amplify");
+    Amplify.configure(dummyConfig);
+    console.log("✅ Amplify configured with mock Auth (CI mode)");
+  } catch (e) {
+    console.warn("⚠️ Amplify mock config failed to load:", e);
+  }
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
