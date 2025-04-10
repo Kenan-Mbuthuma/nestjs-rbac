@@ -12,29 +12,27 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout code
+      - name: 🔁 Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: 🧰 Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm ci
 
-      - name: Install Playwright Browsers
+      - name: 🎭 Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Build Next.js App (Standalone)
+      - name: 🏗️ Build Next.js App (Standalone)
         run: npm run build
 
-      - name: Show .next folder structure
-        run: |
-          echo "✅ Checking .next folder:"
-          ls -R .next || echo "❌ .next folder missing"
+      - name: 📂 Show .next folder structure
+        run: ls -R .next || echo "❌ .next folder missing"
 
-      - name: Check for server.js
+      - name: 🧠 Check for server.js
         run: |
           echo "✅ Checking for standalone server.js"
           ls -l .next/standalone/server.js || (
@@ -42,24 +40,30 @@ jobs:
             exit 1
           )
 
-      - name: Start Next.js App (Standalone) in Background
+      - name: 🩹 Fix missing static files for standalone mode
         run: |
-          echo "🚀 Starting standalone app..."
+          echo "📁 Copying static files to .next/standalone..."
+          mkdir -p .next/standalone/.next
+          cp -r .next/static .next/standalone/.next/static
+
+      - name: 🚀 Start Next.js App (Standalone) in Background
+        run: |
+          echo "💥 Starting app on port 3000..."
           nohup node .next/standalone/server.js > app.log 2>&1 &
           sleep 5
-          echo "📄 Preview of app.log:"
-          cat app.log || echo "⚠️ No log file yet"
+          echo "📄 Initial app.log output:"
+          cat app.log || echo "⚠️ No app.log found"
         env:
           PORT: 3000
 
-      - name: Wait for App to Be Ready on Port 3000
+      - name: ⏳ Wait for App to Be Ready on Port 3000
         run: |
-          echo "⏳ Waiting for app to respond..."
-          npx wait-on http://localhost:3000 || (
-            echo "❌ App failed to start. Dumping app.log..." &&
+          echo "🕓 Waiting for http://localhost:3000"
+          timeout 60s npx wait-on http://localhost:3000 || (
+            echo "❌ App failed to start. Dumping logs..." &&
             cat app.log &&
             exit 1
           )
 
-      - name: Run Resiliency Tests
+      - name: ✅ Run Resiliency Tests
         run: npx playwright test tests/resiliency
