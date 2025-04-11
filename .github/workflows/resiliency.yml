@@ -67,4 +67,4 @@ jobs:
           )
 
       - name: ✅ Run Resiliency Tests
-        run: npx playwright test tests/resiliency
+        run: npm run test:resiliency
